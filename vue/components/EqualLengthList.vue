@@ -83,23 +83,12 @@ function select(p: IPCB_EqualLengthNetGroupItem) {
   border-radius: 4px;
 }
 
-.list-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.list-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 4px
-}
-
-@media (prefers-color-scheme: dark) {
-  .list-body::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.06);
-  }
-}
-
-.list-body::-webkit-scrollbar-track {
-  background: transparent;
+.list-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border-radius: 4px;
+  @include calc-scrollbar;
 }
 
 .row {

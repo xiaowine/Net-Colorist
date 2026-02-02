@@ -311,6 +311,29 @@
 	}
 }
 
+// 通用滚动条样式 mixin（供各组件引入使用）
+@mixin calc-scrollbar {
+	&::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: rgba(0, 0, 0, 0.12);
+		border-radius: 4px;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		&::-webkit-scrollbar-thumb {
+			background: rgba(255, 255, 255, 0.06);
+		}
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+}
+
 /* 公共：高亮结果数值 */
 .calc-result-number {
 	color: var(--calc-primary);

@@ -23,14 +23,17 @@
         </div>
 
         <footer class="footer">
-            <ButtonsPanel @refresh="onRefresh" @on-random-assign="onRandomAssign"
-                @on-random-assign-equal-length="onRandomAssignEqualLength" @sync="onSync" @apply="onApply"
+            <ButtonsPanel @refresh="onRefresh" @on-random="onRandom" @sync="onSync" @apply="onApply"
                 @cancel="onCancel" />
         </footer>
 
         <ColorDialog v-model:modelValue="dialogVisible" :initialColor="dialogInitialColor"
             :availableColors="availableColors" :userColors="userColors" @confirm="onDialogConfirm"
             @close="onDialogClose" />
+
+        <RandomAssignDialog v-model:modelValue="randomDialogVisible" :availableColors="availableColors"
+            :userColors="userColors" :networkClasses="networkClasses" :equalLengthPairs="equalLengthPairs"
+            @confirm="onRandomConfirm" @close="() => { randomDialogVisible = false }" />
     </div>
 </template>
 
@@ -43,6 +46,7 @@ import EqualLengthList from '../components/EqualLengthList.vue';
 import ButtonsPanel from '../components/ButtonsPanel.vue';
 import { isEDA } from '../utils/utils';
 import ColorDialog from '../components/ColorDialog.vue';
+import RandomAssignDialog from '../components/RandomAssignDialog.vue';
 import { ColorRGBA, hexToColor, UserColorMap } from '../utils/color';
 
 const loading = ref(false);
@@ -173,11 +177,26 @@ async function onRefresh() {
     }
 }
 
-function onRandomAssign() {
+function onRandom() {
+    // 打开随机分配对话框
+    randomDialogVisible.value = true;
 }
 
-function onRandomAssignEqualLength() {
+const randomDialogVisible = ref(false);
+
+function onRandomConfirm(assignments: Array<{ type: 'network' | 'equal'; name: string; color: ColorRGBA }>) {
+    // apply assignments to networkClasses and equalLengthPairs
+    for (const a of assignments) {
+        if (a.type === 'network') {
+            const idx = networkClasses.value.findIndex(x => x && x.name === a.name);
+            if (idx >= 0) networkClasses.value[idx] = { ...networkClasses.value[idx], color: a.color } as IPCB_NetClassItem;
+        } else if (a.type === 'equal') {
+            const idx = equalLengthPairs.value.findIndex(x => x && x.name === a.name);
+            if (idx >= 0) equalLengthPairs.value[idx] = { ...equalLengthPairs.value[idx], color: a.color } as IPCB_EqualLengthNetGroupItem;
+        }
+    }
 }
+
 
 function onSync() {
     // 同步

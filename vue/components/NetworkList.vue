@@ -81,13 +81,12 @@ function select(p: IPCB_NetClassItem) {
   border-radius: 4px;
 }
 
-.list-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.list-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
-  border-radius: 4px
+.list-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  border-radius: 4px;
+  @include calc-scrollbar;
 }
 
 .row {
