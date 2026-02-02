@@ -1,0 +1,357 @@
+// 计算器页面共用样式和主题变量
+
+// 主题变量 mixin - 用于在组件中注入主题变量
+@mixin calculator-theme {
+	// 字体大小
+	--font-size-base: 13px;
+	--font-size-header: 17px;
+	--font-size-value: 20px;
+
+	// 浅色主题变量
+	--calc-bg: #fff;
+	--calc-card: #fbfdff;
+	--calc-muted: #6b7280;
+	--calc-text: #0f172a;
+	--calc-border: #e6edf4;
+	--calc-card-border: #eef2ff;
+	--calc-primary: #60a5fa;
+	--calc-error: #b91c1c;
+	--calc-shadow: 0 6px 18px rgba(13, 38, 59, 0.06);
+	--calc-focus-ring: 0 0 0 4px rgba(96, 165, 250, 0.08);
+
+	// table and button extras
+	--calc-table-header: rgba(15, 23, 42, 0.03);
+	--calc-table-row-odd: rgba(15, 23, 42, 0.02);
+	--calc-row-hover: rgba(96, 165, 250, 0.04);
+	--calc-refresh-hover-bg: rgba(96, 165, 250, 0.08);
+	--calc-btn-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+	--calc-delete-hover-bg: rgba(185, 28, 28, 0.06);
+	--calc-delete-hover-border: rgba(184, 28, 28, 0.3);
+
+	// 深色主题变量覆盖
+	@media (prefers-color-scheme: dark) {
+		--calc-bg: #404040;
+		--calc-card: #404040;
+		--calc-muted: #9aa4b2;
+		--calc-text: #e6eef8;
+		--calc-border: rgba(255, 255, 255, 0.18);
+		--calc-card-border: rgba(255, 255, 255, 0.12);
+		--calc-primary: #3b82f6;
+		--calc-error: #fca5a5;
+		--calc-shadow: none;
+		--calc-focus-ring: 0 0 0 4px rgba(59, 130, 246, 0.24);
+
+		// dark mode table/button extras
+		--calc-table-header: rgba(255, 255, 255, 0.04);
+		--calc-table-row-odd: rgba(255, 255, 255, 0.02);
+		--calc-row-hover: rgba(59, 130, 246, 0.06);
+		--calc-refresh-hover-bg: rgba(59, 130, 246, 0.08);
+		--calc-btn-shadow: 0 4px 12px rgba(59, 130, 246, 0.24);
+		--calc-delete-hover-bg: rgba(255, 255, 255, 0.03);
+		--calc-delete-hover-border: rgba(255, 255, 255, 0.06);
+	}
+}
+
+// 基础计算器容器样式 mixin
+@mixin calculator-base {
+	@include calculator-theme;
+
+	max-width: 360px;
+	border: 1px solid var(--calc-border);
+	background: var(--calc-bg);
+	font-family: 'Microsoft YaHei UI', system-ui;
+	color-scheme: light dark;
+
+	@media (prefers-color-scheme: dark) {
+		border-color: var(--calc-border);
+	}
+}
+
+// 标题样式 mixin
+@mixin calc-header {
+	h3 {
+		margin: 0;
+		font-size: var(--font-size-header);
+		color: var(--calc-text);
+	}
+}
+
+// 表单容器样式 mixin
+@mixin calc-form {
+	display: grid;
+	margin-top: 10px;
+}
+
+// 字段样式 mixin
+@mixin calc-field {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+
+	label {
+		color: var(--calc-text);
+		font-size: var(--font-size-base);
+	}
+}
+
+// 分段控件样式 mixin
+@mixin calc-segmented {
+	display: inline-flex;
+	background: rgba(15, 23, 42, 0.03);
+	padding: 4px;
+	border-radius: 8px;
+
+	button {
+		border: 0;
+		background: transparent;
+		padding: 6px 10px;
+		border-radius: 6px;
+		cursor: pointer;
+		color: var(--calc-text);
+		transition:
+			background 140ms ease,
+			color 140ms ease,
+			transform 140ms ease;
+
+		&:hover {
+			transform: translateY(-1px);
+		}
+
+		&:focus-visible {
+			outline: none;
+			box-shadow: var(--calc-focus-ring);
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		background: rgba(255, 255, 255, 0.045);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+
+		button {
+			color: var(--calc-muted);
+
+			&:hover {
+				background: rgba(255, 255, 255, 0.03);
+				transform: translateY(-1px);
+			}
+
+			&:focus-visible {
+				box-shadow: var(--calc-focus-ring);
+			}
+		}
+	}
+}
+
+// 输入框样式 mixin
+@mixin calc-input {
+	padding: 6px;
+	border: 1px solid var(--calc-border);
+	border-radius: 6px;
+	font-size: var(--font-size-base);
+	background: transparent;
+	color: var(--calc-text);
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: var(--calc-focus-ring);
+		border-color: var(--calc-primary);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		background: rgba(255, 255, 255, 0.06);
+		border-color: rgba(255, 255, 255, 0.16);
+		color: var(--calc-text);
+		transition:
+			box-shadow 160ms ease,
+			border-color 160ms ease,
+			background 160ms ease;
+
+		&:focus-visible {
+			box-shadow: var(--calc-focus-ring);
+			border-color: var(--calc-primary);
+		}
+
+		&::selection {
+			background: rgba(255, 255, 255, 0.14);
+			color: var(--calc-text);
+		}
+	}
+}
+
+// 选择框样式 mixin
+@mixin calc-select {
+	padding: 6px;
+	border: 1px solid var(--calc-border);
+	border-radius: 6px;
+	background: var(--calc-card);
+	color: var(--calc-text);
+	font-size: var(--font-size-base);
+
+	&:focus-visible {
+		outline: none;
+		box-shadow: var(--calc-focus-ring);
+		border-color: var(--calc-primary);
+	}
+
+	option {
+		background: var(--calc-bg);
+		color: var(--calc-text);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		background: rgba(255, 255, 255, 0.04);
+		color: var(--calc-text);
+		border-color: rgba(255, 255, 255, 0.12);
+
+		option {
+			background: var(--calc-bg);
+			color: var(--calc-text);
+		}
+	}
+}
+
+// 字段后缀样式 mixin
+@mixin calc-field-suffix {
+	font-size: var(--font-size-base);
+	color: var(--calc-text);
+
+	@media (prefers-color-scheme: dark) {
+		color: #e2e8f0;
+	}
+}
+
+// 结果容器样式 mixin
+@mixin calc-result {
+	margin-top: 12px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+
+	.error {
+		color: var(--calc-error);
+		background: rgba(185, 28, 28, 0.06);
+		padding: 8px;
+		border-radius: 6px;
+	}
+}
+
+// 结果内部容器样式 mixin - 防止高度跳动
+@mixin calc-result-inner {
+	min-height: 42px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 8px;
+}
+
+// 结果卡片样式 mixin
+@mixin calc-result-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: 8px;
+	background: var(--calc-card);
+	border: 1px solid var(--calc-card-border);
+
+	@media (prefers-color-scheme: dark) {
+		border-color: var(--calc-card-border);
+		background: var(--calc-card);
+	}
+}
+
+// 结果值样式 mixin
+@mixin calc-result-value {
+	font-size: var(--font-size-value);
+	font-weight: 800;
+	color: var(--calc-text);
+	display: flex;
+	align-items: baseline;
+}
+
+// 结果单位样式 mixin
+@mixin calc-result-unit {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--calc-muted);
+	margin-left: 6px;
+	opacity: 0.95;
+}
+
+// 结果注释样式 mixin
+@mixin calc-result-note {
+	font-size: 12px;
+	color: var(--calc-muted);
+	text-align: right;
+	line-height: 1.2;
+}
+
+// 隐藏数字输入框原生控件 mixin
+@mixin hide-number-input-controls {
+	input[type='number']::-webkit-inner-spin-button,
+	input[type='number']::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+		background: transparent;
+	}
+
+	input[type='number'] {
+		-moz-appearance: textfield;
+		appearance: textfield;
+	}
+}
+
+// 减少动效 mixin
+@mixin reduced-motion {
+	@media (prefers-reduced-motion: reduce) {
+		.calc-segmented button,
+		.calc-input {
+			transition: none;
+			transform: none;
+		}
+	}
+}
+
+/* 公共：高亮结果数值 */
+.calc-result-number {
+	color: var(--calc-primary);
+	font-weight: 600;
+}
+
+// 通用按钮样式 mixin
+@mixin calc-button($bg, $color, $border, $hoverBg, $shadow: none) {
+	padding: 8px 12px;
+	border-radius: 6px;
+	border: 1px solid #{$border};
+	background: #{$bg};
+	color: #{$color};
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	&:hover:not(:disabled) {
+		background: #{$hoverBg};
+	}
+
+	&:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		background: var(--calc-card);
+		color: var(--calc-muted);
+		border-color: var(--calc-border);
+	}
+
+	@if $shadow != none {
+		box-shadow: $shadow;
+	}
+}
+
+// 主按钮（强调）
+@mixin calc-button-primary {
+	@include calc-button(var(--calc-primary), white, var(--calc-primary), var(--calc-primary), var(--calc-btn-shadow));
+}
+
+// 次要按钮（默认卡片风格）
+@mixin calc-button-secondary {
+	@include calc-button(var(--calc-card), var(--calc-text), var(--calc-border), var(--calc-refresh-hover-bg));
+}

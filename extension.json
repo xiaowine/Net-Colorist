@@ -1,14 +1,14 @@
 {
-	"name": "pro-api-sdk",
+	"name": "net-colorist",
 	"uuid": "40134a081e6b488db1ab0ab4da761672",
-	"displayName": "PRO API SDK",
-	"description": "嘉立创EDA & EasyEDA 专业版扩展 API 开发工具",
-	"version": "1.0.0",
-	"publisher": "JLCEDA <support@lceda.cn>",
+	"displayName": "颜色调色师",
+	"description": "为PCB网络一键分配颜色，提升设计体验。",
+	"version": "0.0.1",
+	"publisher": "xiaowine",
 	"engines": {
 		"eda": "^2.3.0"
 	},
-	"license": "Apache-2.0",
+	"license": "GPL-3.0",
 	"repository": {
 		"type": "extension-store",
 		"url": ""
@@ -18,47 +18,21 @@
 	"images": {
 		"logo": "./images/logo.png"
 	},
-	"homepage": "https://pro.lceda.cn",
-	"bugs": "https://lceda.cn/page/feedback?originPage=other",
+	"homepage": "https://github.com/xiaowine/Net-Colorist",
+	"bugs": "https://github.com/xiaowine/Net-Colorist/issues/new",
 	"activationEvents": {},
 	"entry": "./dist/index",
 	"dependentExtensions": {},
 	"headerMenus": {
-		"home": [
-			{
-				"id": "API SDK",
-				"title": "API SDK",
-				"menuItems": [
-					{
-						"id": "About",
-						"title": "About...",
-						"registerFn": "about"
-					}
-				]
-			}
-		],
-		"sch": [
-			{
-				"id": "API SDK",
-				"title": "API SDK",
-				"menuItems": [
-					{
-						"id": "About",
-						"title": "About...",
-						"registerFn": "about"
-					}
-				]
-			}
-		],
 		"pcb": [
 			{
-				"id": "API SDK",
-				"title": "API SDK",
+				"id": "net-colorist",
+				"title": "net-colorist",
 				"menuItems": [
 					{
-						"id": "About",
-						"title": "About...",
-						"registerFn": "about"
+						"id": "Set",
+						"title": "Set...",
+						"registerFn": "set"
 					}
 				]
 			}

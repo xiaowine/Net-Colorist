@@ -1,9 +1,9 @@
 {
 	"name": "pro-api-sdk",
 	"description": "嘉立创EDA & EasyEDA 专业版扩展 API 开发工具",
-	"author": "JLCEDA <support@lceda.cn>",
-	"license": "Apache-2.0",
-	"homepage": "https://pro.lceda.cn/",
+	"author": "xiao_wine <xiaowine0@gmail.com>",
+	"license": "GPL-3.0",
+	"homepage": "https://github.com/xiaowine/Net-Colorist",
 	"scripts": {
 		"compile": "rimraf ./dist/ && ts-node ./config/esbuild.prod.ts",
 		"prepare": "husky",
@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"vue": "^3.5.24",
+		"vue-color": "^3.3.3",
 		"vue-router": "^4.6.3"
 	},
 	"devDependencies": {
@@ -23,8 +24,11 @@
 		"@microsoft/tsdoc": "^0.15.1",
 		"@trivago/prettier-plugin-sort-imports": "^5.2.1",
 		"@types/fs-extra": "^11.0.4",
+		"@types/node": "^24.10.1",
 		"@typescript-eslint/eslint-plugin": "^7.18.0",
 		"@typescript-eslint/parser": "^7.18.0",
+		"@vitejs/plugin-vue": "^6.0.1",
+		"@vue/tsconfig": "^0.8.1",
 		"esbuild": "^0.24.2",
 		"eslint": "^8.57.0",
 		"eslint-config-alloy": "^5.1.2",
@@ -37,13 +41,9 @@
 		"prettier": "^3.4.2",
 		"rimraf": "^6.0.1",
 		"ts-node": "^10.9.2",
-		"@types/node": "^24.10.1",
-		"@vitejs/plugin-vue": "^6.0.1",
-		"@vue/tsconfig": "^0.8.1",
 		"typescript": "~5.9.3",
 		"vite": "^7.2.4",
-		"vue-tsc": "^3.1.4",
-		"sass-embedded": "^1.93.3"
+		"vue-tsc": "^3.1.4"
 	},
 	"lint-staged": {
 		"*.ts": "eslint --cache --fix",

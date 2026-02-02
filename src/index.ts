@@ -22,6 +22,24 @@ const openPage = async (name: string, width: number, height: number) => {
 	}
 };
 
-export async function about(): Promise<void> {
-	await openPage('First', 400, 300);
+export async function set(): Promise<void> {
+	await openPage('First', 700, 384);
 }
+// const key: TSYS_ShortcutKeys = ['Ctrl+Alt+G'] as unknown as TSYS_ShortcutKeys;
+// eda.sys_ShortcutKey.unregisterShortcutKey(key);
+// eda.sys_ShortcutKey.registerShortcutKey(key, 'Open About Page', async () => {
+// 	console.log('Shortcut Key Activated');
+// });
+
+// const allel = await eda.pcb_Drc.getAllEqualLengthNetGroups();
+// allel.forEach((el) => {
+// 	if (el.name.endsWith('_DIFP')) {
+// 		eda.pcb_Drc.deleteEqualLengthNetGroup(el.name);
+// 	}
+// });
+
+// const alldfp = await eda.pcb_Drc.getAllDifferentialPairs();
+// alldfp.forEach((dfp) => {
+// 	console.log('Differential Pair Name:', dfp.name);
+// 	eda.pcb_Drc.createEqualLengthNetGroup(`${dfp.name}_DIFP`, [dfp.positiveNet, dfp.negativeNet], { r: 250, g: 250, b: 250, alpha: 1.0 });
+// });
