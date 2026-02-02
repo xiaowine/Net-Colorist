@@ -5,11 +5,12 @@
       <ul>
         <li v-for="(p, idx) in pairs" :key="p.name" tabindex="0">
           <div class="row">
-            <button class="color-item color-swatch" :style="{ background: normalizeColor(p.color).hex }"
+            <button class="color-item color-swatch" :title="rgbToHex(p.color as ColorRGBA).toUpperCase()"
+              :style="{ background: colorToCssRGBA((p.color as ColorRGBA) ?? transparentRgba) }"
               @click.stop="() => emit('request-edit', p, idx)"></button>
             <div class="content" @click="select(p)">
               <div class="name">{{ p.name }}</div>
-              <div class="nets">共有{{ p.name.length }}个网络</div>
+              <div class="nets">共有{{ p.nets.length }}个网络</div>
             </div>
           </div>
         </li>
@@ -20,11 +21,9 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import normalizeColor from '../utils/color';
+import { ColorRGBA, colorToCssRGBA, rgbToHex, transparentRgba } from '../utils/color';
 
-type ColorItem = { id: string; hex: string; name?: string };
-
-const props = defineProps<{ pairs?: IPCB_NetClassItem[]; availableColors?: ColorItem[]; userColors?: (ColorItem | undefined)[] }>();
+const props = defineProps<{ pairs?: IPCB_NetClassItem[]; userColors?: Record<number, import('../utils/color').ColorRGBA> | undefined }>();
 const emit = defineEmits<{
   (e: 'select', p: IPCB_NetClassItem): void;
   (e: 'request-edit', p: IPCB_NetClassItem, idx: number): void;

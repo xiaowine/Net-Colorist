@@ -23,19 +23,3 @@ export function useRouteName(): ComputedRef<string> {
 	const route = useRoute();
 	return computed(() => getRouteName(route));
 }
-
-export const hexToColor = (hex: string) => {
-	const h = hex.replace(/^#/, '');
-	const full =
-		h.length === 3
-			? h
-					.split('')
-					.map((ch) => ch + ch)
-					.join('')
-			: h;
-	const intVal = parseInt(full, 16);
-	const r = (intVal >> 16) & 0xff;
-	const g = (intVal >> 8) & 0xff;
-	const b = intVal & 0xff;
-	return { r, g, b, alpha: 1 };
-};

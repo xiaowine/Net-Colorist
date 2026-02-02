@@ -5,7 +5,8 @@
       <ul>
         <li v-for="(p, idx) in pairs" :key="p.name" tabindex="0">
           <div class="row">
-            <button class="color-item color-swatch" :style="{ background: normalizeColor(p.color).hex }"
+            <button class="color-item color-swatch" :title="rgbToHex(p.color as ColorRGBA).toUpperCase()"
+              :style="{ background: colorToCssRGBA((p.color as ColorRGBA) ?? transparentRgba) }"
               @click.stop="() => emit('request-edit', p, idx)"></button>
             <div class="content" @click="select(p)">
               <div class="name">{{ p.name }}</div>
@@ -20,7 +21,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import normalizeColor from '../utils/color';
+import { ColorRGBA, colorToCssRGBA, rgbToHex, transparentRgba } from '../utils/color';
 
 type Pair = { id: string; name: string; nets: string[] };
 

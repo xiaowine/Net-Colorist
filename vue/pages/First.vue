@@ -8,14 +8,12 @@
 
             <section class="cell top-right">
                 <h3>自定义颜色</h3>
-                <CustomColors :colors="userColors" :max="MAX_USER_COLORS" @add="onAddUserColor" @edit="onEditUserColor"
-                    @delete="onDeleteUserColor" />
+                <CustomColors :colors="userColors" :max="MAX_USER_COLORS" />
             </section>
 
             <section class="cell bottom-left">
                 <h3>网络类</h3>
-                <NetworkList :pairs="networkClasses" :availableColors="availableColors" :userColors="userColors"
-                    @request-edit="onRequestEdit" />
+                <NetworkList :pairs="networkClasses" :userColors="userColors" @request-edit="onRequestEdit" />
             </section>
 
             <section class="cell bottom-right">
@@ -43,25 +41,25 @@ import CustomColors from '../components/CustomColors.vue';
 import NetworkList from '../components/NetworkList.vue';
 import EqualLengthList from '../components/EqualLengthList.vue';
 import ButtonsPanel from '../components/ButtonsPanel.vue';
-import { hexToColor, isEDA } from '../utils/utils';
+import { isEDA } from '../utils/utils';
 import ColorDialog from '../components/ColorDialog.vue';
-import normalizeColor, { toEdaColor, ColorItem } from '../utils/color';
+import { ColorRGBA, hexToColor, UserColorMap } from '../utils/color';
 
 const loading = ref(false);
 
 // 固定预设颜色（不可改）
-const availableColors = computed<ColorItem[]>(() => {
+const availableColors = computed<ColorRGBA[]>(() => {
     const hexes = [
-        '#2d2d2d', '#6b6b6b', '#bfbfbf', '#ffffff', '#ff6b6b', '#ff8c66', '#ffb86b',
-        '#ffd76b', '#d9ff6b', '#aaff6b', '#6bff8e', '#6be0ff', '#6bafff', '#9a6bff',
-        '#ff6bff', '#ffc0cb', '#000000', '#444444', '#888888', '#007fff',
+        '#1f2937', '#374151', '#6b7280', '#9ca3af', '#ffffff',
+        '#ef4444', '#f97316', '#f59e0b', '#facc15', '#84cc16',
+        '#22c55e', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1',
+        '#8b5cf6', '#ec4899', '#db2777', '#d946ef', '#000000',
     ];
-    return hexes.map((h, i) => ({ id: `preset-${i}`, hex: h }));
+    return hexes.map((h) => hexToColor(h));
 });
 
-// 用户自定义颜色（可增删，受限数量）——上限与固定预设颜色数量相同
 const MAX_USER_COLORS = computed(() => availableColors.value.length);
-const userColors = ref<Array<ColorItem | undefined>>(Array.from({ length: MAX_USER_COLORS.value }).map(() => undefined));
+const userColors = ref<UserColorMap>({});
 // 差分对与等长对仍为空（按需实现）
 const networkClasses = ref<IPCB_NetClassItem[]>([]);
 
@@ -72,26 +70,7 @@ const dialogVisible = ref(false);
 const dialogTarget = ref<any | null>(null);
 const dialogTargetIndex = ref<number | null>(null);
 const dialogTargetType = ref<'network' | 'equal' | null>(null);
-const dialogInitialColor = ref<ColorItem | null>(null);
-
-function onAddUserColor(c: ColorItem, idx: number) {
-    if (idx < 0 || idx >= MAX_USER_COLORS.value) return;
-    // place color at the given slot index
-    userColors.value[idx] = c;
-}
-
-function onEditUserColor(c: ColorItem, idx: number) {
-    if (idx < 0 || idx >= MAX_USER_COLORS.value) return;
-    userColors.value[idx] = c;
-}
-
-function onDeleteUserColor(id: string) {
-    const idx = userColors.value.findIndex(x => x && x.id === id);
-    if (idx >= 0) {
-        // clear the slot (keep array length and indices)
-        userColors.value[idx] = undefined;
-    }
-}
+const dialogInitialColor = ref<ColorRGBA | null>(null);
 
 function onUpdateNetworkClassColor(p: IPCB_NetClassItem, color: any) {
     const idx = networkClasses.value.findIndex(x => x && x.name === p.name);
@@ -103,7 +82,7 @@ function onUpdateNetworkClassColor(p: IPCB_NetClassItem, color: any) {
 function onRequestEdit(p: IPCB_NetClassItem, idx: number) {
     dialogTarget.value = p;
     dialogTargetIndex.value = idx;
-    dialogInitialColor.value = normalizeColor(p.color);
+    dialogInitialColor.value = p.color as ColorRGBA;
     dialogTargetType.value = 'network';
     dialogVisible.value = true;
 }
@@ -111,7 +90,7 @@ function onRequestEdit(p: IPCB_NetClassItem, idx: number) {
 function onRequestEditEqual(p: IPCB_EqualLengthNetGroupItem, idx: number) {
     dialogTarget.value = p;
     dialogTargetIndex.value = idx;
-    dialogInitialColor.value = normalizeColor(p.color);
+    dialogInitialColor.value = p.color as ColorRGBA;
     dialogTargetType.value = 'equal';
     dialogVisible.value = true;
 }
@@ -124,9 +103,10 @@ function onDialogClose() {
     dialogTargetType.value = null;
 }
 
-function onDialogConfirm(selected: ColorItem) {
+function onDialogConfirm(selected: ColorRGBA) {
     if (!dialogTarget.value) return;
-    const edaColor = toEdaColor(selected.hex);
+    let edaColor: any = null;
+    edaColor = selected;
     if (dialogTargetType.value === 'network') {
         onUpdateNetworkClassColor(dialogTarget.value, edaColor);
     } else if (dialogTargetType.value === 'equal') {
@@ -145,10 +125,22 @@ function onDialogConfirm(selected: ColorItem) {
 
 async function onRefresh() {
     if (isEDA) {
+        loading.value = true;
         networkClasses.value = await eda.pcb_Drc.getAllNetClasses();
         equalLengthPairs.value = await eda.pcb_Drc.getAllEqualLengthNetGroups();
-        console.log('Loaded network classes and equal length pairs from EDA:', networkClasses.value, equalLengthPairs.value);
-        console.log('length', networkClasses.value.length, equalLengthPairs.value.length);
+        // console.log('Loaded network classes and equal length pairs from EDA:', networkClasses.value, equalLengthPairs.value);
+        // console.log('length', networkClasses.value.length, equalLengthPairs.value.length);
+
+        const allConfigs = eda.sys_Storage.getExtensionAllUserConfigs();
+        console.log('Loaded all extension user configs from EDA storage:', allConfigs);
+        if (allConfigs['userColors']) {
+            try {
+                userColors.value = JSON.parse(allConfigs['userColors']) as UserColorMap;
+            } catch (e) {
+                console.error('Failed to parse user colors from EDA storage:', e);
+            }
+        }
+        loading.value = false;
     } else {
         // inject mock data for local testing when not running inside EDA
         const mockNetworkClasses = [
@@ -169,6 +161,15 @@ async function onRefresh() {
 
         networkClasses.value = mockNetworkClasses as IPCB_NetClassItem[];
         equalLengthPairs.value = mockEqualLength as IPCB_EqualLengthNetGroupItem[];
+
+        const data = localStorage.getItem('userColors');
+        if (data) {
+            try {
+                userColors.value = JSON.parse(data) as UserColorMap;
+            } catch (e) {
+                console.error('Failed to parse user colors from localStorage:', e);
+            }
+        }
     }
 }
 
@@ -187,7 +188,7 @@ function onApply() {
 }
 
 function onCancel() {
-    // 取消
+    if (isEDA) eda.sys_IFrame.closeIFrame(undefined);
 }
 
 
@@ -209,6 +210,18 @@ watch(
     },
     { flush: 'sync' },
 );
+
+watch(userColors, async (newVal) => {
+    const data = JSON.stringify(newVal);
+    if (isEDA) {
+        await eda.sys_Storage.setExtensionAllUserConfigs({ ...eda.sys_Storage.getExtensionAllUserConfigs(), 'userColors': data });
+    }
+    else {
+        localStorage.setItem('userColors', data);
+    }
+    console.log('User colors updated:', JSON.stringify(newVal));
+}, { deep: true });
+
 </script>
 
 <style scoped lang="scss">

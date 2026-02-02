@@ -1,10 +1,11 @@
-import { hexToColor } from './utils';
-
-export interface ColorItem {
-	id: string;
-	hex: string;
-	name?: string;
+export interface ColorRGBA {
+	r: number;
+	g: number;
+	b: number;
+	alpha: number;
 }
+
+export type UserColorMap = Record<number, ColorRGBA>;
 
 const pad = (s: string) => (s.length === 1 ? '0' + s : s);
 
@@ -18,6 +19,11 @@ export function rgbToHex(rgb: { r: number; g: number; b: number }): string {
 	const b = clamp(rgb.b);
 	const toHex = (n: number) => pad(n.toString(16));
 	return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export function colorToCssRGBA(c: ColorRGBA) {
+	const a = typeof c.alpha === 'number' ? c.alpha : 1;
+	return `rgba(${clamp(c.r)}, ${clamp(c.g)}, ${clamp(c.b)}, ${a})`;
 }
 
 export function ensureHex(hex: string): string {
@@ -40,27 +46,24 @@ export function ensureHex(hex: string): string {
 	return `#${h.toLowerCase()}`;
 }
 
-export function normalizeColor(input: any): ColorItem {
-	if (!input) return { id: Date.now().toString(), hex: '#ffffff' };
-	if (typeof input === 'object' && 'hex' in input && typeof input.hex === 'string') {
-		return { id: input.id || Date.now().toString(), hex: ensureHex(input.hex), name: input.name };
-	}
-	if (typeof input === 'object' && 'r' in input && 'g' in input && 'b' in input) {
-		try {
-			const hex = rgbToHex({ r: Number(input.r) || 0, g: Number(input.g) || 0, b: Number(input.b) || 0 });
-			return { id: Date.now().toString(), hex };
-		} catch (e) {
-			return { id: Date.now().toString(), hex: '#ffffff' };
-		}
-	}
-	if (typeof input === 'string') {
-		return { id: Date.now().toString(), hex: ensureHex(input) };
-	}
-	return { id: Date.now().toString(), hex: '#ffffff' };
-}
-
 export function toEdaColor(hex: string) {
 	return hexToColor(ensureHex(hex));
 }
 
-export default normalizeColor;
+export const hexToColor = (hex: string): ColorRGBA => {
+	const h = hex.replace(/^#/, '');
+	const full =
+		h.length === 3
+			? h
+					.split('')
+					.map((ch) => ch + ch)
+					.join('')
+			: h;
+	const intVal = parseInt(full, 16);
+	const r = (intVal >> 16) & 0xff;
+	const g = (intVal >> 8) & 0xff;
+	const b = intVal & 0xff;
+	return { r, g, b, alpha: 1 };
+};
+
+export const transparentRgba: ColorRGBA = { r: 0, g: 0, b: 0, alpha: 0 };

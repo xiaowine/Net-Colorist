@@ -6,24 +6,26 @@
                 <ColorPalette :colors="availableColors" @select="onPick" />
             </div>
 
-            <div class="picker-section" v-if="filteredUserColors.length > 0">
+            <div class="picker-section" v-if="userSwatches.length > 0">
                 <div class="picker-title">自定义颜色</div>
                 <div class="user-swatches">
-                    <div v-for="(uc, i) in filteredUserColors" :key="uc.id" class="color-item user-swatch"
-                        :class="{ selected: selectedColor && uc && selectedColor.hex === uc.hex }"
-                        :style="{ background: uc.hex }" @click="() => onPick(uc)"></div>
+                    <div v-for="uc in userSwatches" :key="uc.idx" class="color-item user-swatch"
+                        :class="{ selected: selectedColor && rgbToHex(selectedColor) === rgbToHex(uc.color) }"
+                        :style="{ background: colorToCssRGBA(uc.color) }" @click="() => onPick(uc.color)"></div>
                 </div>
             </div>
 
             <div class="picker-section">
                 <div class="picker-title">其它</div>
-                <input type="color" class="native-input" :value="selectedColor?.hex" @input="onNative" />
+                <input type="color" class="native-input" :value="selectedColor ? rgbToHex(selectedColor) : undefined"
+                    @input="onNative" />
             </div>
 
 
             <div style="font-size: 14px;">颜色预览</div>
             <div class="actions">
-                <div class="preview" v-if="selectedColor" :style="{ background: selectedColor.hex }"></div>
+                <div class="preview" v-if="selectedColor" :style="{ background: colorToCssRGBA(selectedColor) }">
+                </div>
                 <button class="secondary" @click="onClose">取消</button>
                 <button class="primary" @click="onConfirm" :disabled="!selectedColor">确认</button>
             </div>
@@ -34,46 +36,46 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import ColorPalette from './ColorPalette.vue';
-import normalizeColor, { ColorItem } from '../utils/color';
+import { ColorRGBA, rgbToHex, colorToCssRGBA, hexToColor } from '../utils/color';
 
 const props = defineProps<{
     modelValue: boolean;
-    initialColor?: ColorItem | { r: number; g: number; b: number } | string | null;
-    availableColors?: ColorItem[];
-    userColors?: (ColorItem | undefined)[];
+    initialColor: ColorRGBA | null;
+    availableColors?: ColorRGBA[];
+    userColors?: Record<number, ColorRGBA> | undefined;
     title?: string;
 }>();
 
 const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void;
     (e: 'close'): void;
-    (e: 'confirm', selected: ColorItem): void;
-    (e: 'preview', selected: ColorItem): void;
+    (e: 'confirm', selected: ColorRGBA): void;
+    (e: 'preview', selected: ColorRGBA): void;
 }>();
 
-const selectedColor = ref<ColorItem | null>(props.initialColor ? normalizeColor(props.initialColor) : null);
+const selectedColor = ref<ColorRGBA | null>(props.initialColor);
 
 watch(
     () => props.initialColor,
     (v) => {
-        selectedColor.value = v ? normalizeColor(v) : null;
+        selectedColor.value = v;
     },
 );
 
-const availableColors = computed(() => props.availableColors ?? []);
-const userColors = computed(() => props.userColors ?? []);
-const filteredUserColors = computed(() => userColors.value.filter((c): c is ColorItem => !!c));
+const availableColors = computed(() => props.availableColors ?? [] as ColorRGBA[]);
+const userColors = computed(() => props.userColors ?? {} as Record<number, ColorRGBA>);
+const userSwatches = computed(() => Object.entries(userColors.value).map(([k, v]) => ({ idx: Number(k), color: v })));
 
-function onPick(c: ColorItem) {
-    selectedColor.value = normalizeColor(c);
-    emit('preview', selectedColor.value);
+function onPick(c: ColorRGBA) {
+    selectedColor.value = c;
+    emit('preview', selectedColor.value as ColorRGBA);
 }
 
 function onNative(e: Event) {
     const v = (e.target as HTMLInputElement).value;
     if (!v) return;
-    selectedColor.value = normalizeColor(v);
-    emit('preview', selectedColor.value);
+    selectedColor.value = hexToColor(v);
+    emit('preview', selectedColor.value as ColorRGBA);
 }
 
 function onClose() {

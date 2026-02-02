@@ -2,7 +2,8 @@
   <div class="custom-colors">
     <div class="preset-list">
       <div v-for="i in max" :key="i" class="color-item slot" :class="{ empty: !slotColor(i - 1) }"
-        :style="slotStyle(i - 1)" @click.stop="onSlotClick(i - 1)" role="button" tabindex="0">
+        :style="slotStyle(i - 1)" @click.stop="onSlotClick(i - 1)" role="button" tabindex="0"
+        :title="slotColor(i - 1) ? rgbToHex(slotColor(i - 1) as ColorRGBA).toUpperCase() : '未自定义'">
         <button v-if="slotColor(i - 1)" class="delete" @click.stop="onDelete(i - 1)">✕</button>
         <input class="color-input" type="color" :ref="el => setInputRef(el, i - 1)"
           @input="onSlotInput($event, i - 1)" />
@@ -12,40 +13,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { ColorItem } from '../utils/color';
+import { ref } from 'vue';
+import { ColorRGBA, rgbToHex, colorToCssRGBA, hexToColor } from '../utils/color';
 
-const props = defineProps<{ colors?: (ColorItem | undefined)[]; max?: number }>();
-const emit = defineEmits<{
-  (e: 'add', color: ColorItem, idx: number): void
-  (e: 'edit', color: ColorItem, idx: number): void
-  (e: 'delete', id: string): void
-}>();
-
-// handle props.colors which may be an array or a ref to an array
-const rawColors: any = props.colors;
-const colorsArr = computed<ColorItem[]>(() => {
-  if (!rawColors) return [];
-  if (Array.isArray(rawColors)) return rawColors as ColorItem[];
-  return rawColors.value ?? [];
-});
-
-const max = props.max && props.max > 0 ? props.max : 16;
+const props = defineProps<{ colors: Record<number, ColorRGBA>; max: number }>();
 
 // refs to hidden color inputs per slot
-const inputRefs = ref<Array<HTMLInputElement | null>>(Array.from({ length: max }).map(() => null));
+const inputRefs = ref<Array<HTMLInputElement | null>>(Array.from({ length: props.max }).map(() => null));
 
 function setInputRef(el: any, idx: number) {
   inputRefs.value[idx] = el as HTMLInputElement | null;
 }
 
 function slotColor(idx: number) {
-  return colorsArr.value[idx] ?? null;
+  return props.colors[idx] ?? null;
 }
 
 function slotStyle(idx: number) {
   const c = slotColor(idx);
-  if (c) return { background: c.hex };
+  if (c) return { background: colorToCssRGBA(c) };
   return { background: 'transparent', border: '1px dashed #ccc' };
 }
 
@@ -53,26 +39,22 @@ function onSlotClick(idx: number) {
   const input = inputRefs.value[idx];
   if (!input) return;
   const c = slotColor(idx);
-  input.value = c ? c.hex : '#ffffff';
+  input.value = c ? rgbToHex({ r: c.r, g: c.g, b: c.b }) : '#ffffff';
   input.click();
 }
 
 function onSlotInput(e: Event, idx: number) {
   const v = (e.target as HTMLInputElement).value;
   if (!v) return;
-  const existing = slotColor(idx);
-  if (existing) {
-    emit('edit', { ...existing, hex: v }, idx);
-  } else {
-    const item: ColorItem = { id: Date.now().toString(), hex: v };
-    emit('add', item, idx);
-  }
+  const colorObj = hexToColor(v);
+  // directly modify the passed-in hashmap
+  props.colors[idx] = colorObj;
 }
 
 function onDelete(idx: number) {
   const c = slotColor(idx);
   if (!c) return;
-  emit('delete', c.id);
+  delete props.colors[idx];
 }
 </script>
 

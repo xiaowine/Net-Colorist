@@ -1,23 +1,23 @@
 <template>
   <div class="color-palette">
     <div class="preset-list">
-      <div v-for="c in colors" :key="c.id" class="color-item" :style="{ background: c.hex }" @click="selectColor(c)"
-        role="button" tabindex="0"></div>
+      <div v-for="(c, i) in colors" :title="rgbToHex(c).toUpperCase()" :key="i" class="color-item"
+        :style="{ background: colorToCssRGBA(c) }" @click="selectColor(c)" role="button" tabindex="0"></div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ColorItem } from '../utils/color';
+import { colorToCssRGBA, rgbToHex } from '../utils/color';
 
-const props = defineProps<{ colors?: ColorItem[] }>();
+const props = defineProps<{ colors?: import('../utils/color').ColorRGBA[] }>();
 const emit = defineEmits<{
-  (e: 'select', color: ColorItem): void
+  (e: 'select', color: import('../utils/color').ColorRGBA): void
 }>();
 
-const colors = props.colors || [];
+const colors = props.colors || [] as import('../utils/color').ColorRGBA[];
 
-function selectColor(c: ColorItem) {
+function selectColor(c: import('../utils/color').ColorRGBA) {
   emit('select', c);
 }
 </script>
