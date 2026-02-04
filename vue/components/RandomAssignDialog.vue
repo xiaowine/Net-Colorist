@@ -163,7 +163,6 @@ const poolSize = computed(() => {
 .picker-dialog {
     width: 560px;
     max-width: calc(100% - 32px);
-    max-height: 72vh;
     overflow: auto;
     background: color-mix(in srgb, var(--calc-card) 92%, white 8%);
     border: 1px solid var(--calc-border);

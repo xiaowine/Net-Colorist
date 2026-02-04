@@ -2,7 +2,7 @@
     <div class="page-root">
         <div class="grid">
             <section class="cell top-left">
-                <h3>固定颜色</h3>
+                <h3>颜色</h3>
                 <ColorPalette :colors="availableColors" />
             </section>
 
@@ -23,7 +23,7 @@
         </div>
 
         <footer class="footer">
-            <ButtonsPanel @refresh="onRefresh" @on-random="onRandom" @sync="onSync" @apply="onApply"
+            <ButtonsPanel @refresh="onRefresh" @on-help="onHelp" @on-random="onRandom" @sync="onSync" @apply="onApply"
                 @cancel="onCancel" />
         </footer>
 
@@ -33,7 +33,9 @@
 
         <RandomAssignDialog v-model:modelValue="randomDialogVisible" :availableColors="availableColors"
             :userColors="userColors" :networkClasses="networkClasses" :equalLengthPairs="equalLengthPairs"
-            @confirm="onRandomConfirm" @close="() => { randomDialogVisible = false }" />
+            @confirm="onRandomConfirm" />
+
+        <SimpleDialog v-model:modelValue="helpDialogVisible" title="使用说明" :message="message" @confirm="onHelpConfirm" />
     </div>
 </template>
 
@@ -47,7 +49,8 @@ import ButtonsPanel from '../components/ButtonsPanel.vue';
 import { isEDA } from '../utils/utils';
 import ColorDialog from '../components/ColorDialog.vue';
 import RandomAssignDialog from '../components/RandomAssignDialog.vue';
-import { ColorRGBA, hexToColor, UserColorMap } from '../utils/color';
+import SimpleDialog from '../components/SimpleDialog.vue';
+import { ColorRGBA, hexToColor, rgbToHex, UserColorMap } from '../utils/color';
 
 const loading = ref(false);
 
@@ -75,6 +78,18 @@ const dialogTarget = ref<any | null>(null);
 const dialogTargetIndex = ref<number | null>(null);
 const dialogTargetType = ref<'network' | 'equal' | null>(null);
 const dialogInitialColor = ref<ColorRGBA | null>(null);
+
+const randomDialogVisible = ref(false);
+const helpDialogVisible = ref(false);
+
+const message = ref(`### 按钮说明：
+- 随机分配颜色：根据当前颜色池随机为网络/等长对分配颜色。 
+- 将差分对同步到等长对：由于目前差分对无法使用插件分配颜色，退而求其次可以将其转换成等长对设置颜色。
+- 应用到PCB：将当前颜色写回 EDA PCB（会覆盖对应类/组的颜色，请谨慎操作）。
+---
+**注意**：由于嘉立创EDA的BUG，设置的颜色会有偏差，以及应用到PCB后显示颜色会变成白的，需要重启EDA。
+`);
+
 
 function onUpdateNetworkClassColor(p: IPCB_NetClassItem, color: any) {
     const idx = networkClasses.value.findIndex(x => x && x.name === p.name);
@@ -109,29 +124,32 @@ function onDialogClose() {
 
 function onDialogConfirm(selected: ColorRGBA) {
     if (!dialogTarget.value) return;
-    let edaColor: any = null;
-    edaColor = selected;
     if (dialogTargetType.value === 'network') {
-        onUpdateNetworkClassColor(dialogTarget.value, edaColor);
+        onUpdateNetworkClassColor(dialogTarget.value, selected);
     } else if (dialogTargetType.value === 'equal') {
         // update equalLengthPairs array
         const idx = dialogTargetIndex.value;
         if (idx !== null && idx >= 0 && idx < equalLengthPairs.value.length) {
-            equalLengthPairs.value[idx] = { ...equalLengthPairs.value[idx], color: edaColor } as IPCB_EqualLengthNetGroupItem;
+            equalLengthPairs.value[idx] = { ...equalLengthPairs.value[idx], color: selected } as IPCB_EqualLengthNetGroupItem;
         } else {
             // fallback: find by name
             const i = equalLengthPairs.value.findIndex(x => x && x.name === dialogTarget.value.name);
-            if (i >= 0) equalLengthPairs.value[i] = { ...equalLengthPairs.value[i], color: edaColor } as IPCB_EqualLengthNetGroupItem;
+            if (i >= 0) equalLengthPairs.value[i] = { ...equalLengthPairs.value[i], color: selected } as IPCB_EqualLengthNetGroupItem;
         }
     }
     onDialogClose();
 }
 
 async function onRefresh() {
+    networkClasses.value = [];
+    equalLengthPairs.value = [];
+    userColors.value = {};
+
     if (isEDA) {
         loading.value = true;
         networkClasses.value = await eda.pcb_Drc.getAllNetClasses();
         equalLengthPairs.value = await eda.pcb_Drc.getAllEqualLengthNetGroups();
+        console.log(equalLengthPairs.value);
         // console.log('Loaded network classes and equal length pairs from EDA:', networkClasses.value, equalLengthPairs.value);
         // console.log('length', networkClasses.value.length, equalLengthPairs.value.length);
 
@@ -182,7 +200,13 @@ function onRandom() {
     randomDialogVisible.value = true;
 }
 
-const randomDialogVisible = ref(false);
+function onHelp() {
+    helpDialogVisible.value = true;
+}
+
+function onHelpConfirm() {
+    helpDialogVisible.value = false;
+}
 
 function onRandomConfirm(assignments: Array<{ type: 'network' | 'equal'; name: string; color: ColorRGBA }>) {
     // apply assignments to networkClasses and equalLengthPairs
@@ -195,15 +219,74 @@ function onRandomConfirm(assignments: Array<{ type: 'network' | 'equal'; name: s
             if (idx >= 0) equalLengthPairs.value[idx] = { ...equalLengthPairs.value[idx], color: a.color } as IPCB_EqualLengthNetGroupItem;
         }
     }
+    randomDialogVisible.value = false
 }
 
 
-function onSync() {
-    // 同步
+async function onSync() {
+    if (isEDA) {
+        loading.value = true
+        const equalGroups = await eda.pcb_Drc.getAllEqualLengthNetGroups();
+        // iterate over a shallow copy to avoid mutating the array while iterating
+        for (const group of [...equalGroups]) {
+            if (group.name.endsWith('_DIFP')) {
+                const idx = equalGroups.findIndex(g => g && g.name === group.name);
+                if (idx >= 0) equalGroups.splice(idx, 1);
+                eda.pcb_Drc.deleteEqualLengthNetGroup(group.name);
+            }
+        }
+
+        const differentialPairs = await eda.pcb_Drc.getAllDifferentialPairs();
+        differentialPairs.forEach((pair) => {
+            if (equalGroups.some(g => g && g.nets && (
+                (pair.positiveNet && g.nets.includes(pair.positiveNet)) ||
+                (pair.negativeNet && g.nets.includes(pair.negativeNet))
+            ))) {
+                return;
+            }
+            if (pair.negativeNet)
+                eda.pcb_Drc.createEqualLengthNetGroup(`${pair.name}_DIFP`, [pair.positiveNet, pair.negativeNet], null);
+        });
+        loading.value = false;
+        onRefresh();
+    }
 }
 
-function onApply() {
-    // 应用
+async function onApply() {
+    if (isEDA) {
+        loading.value = true;
+        try {
+            // apply network class colors — ensure we pass plain JS values (not Vue proxies)
+            for (const nc of networkClasses.value) {
+                const name = String(nc.name);
+                const nets = Array.isArray(nc.nets) ? nc.nets.map((n: any) => String(n)) : [];
+                const color = nc.color ? { r: nc.color.r, g: nc.color.g, b: nc.color.b, alpha: nc.color.alpha } : null;
+                const safeNets = JSON.parse(JSON.stringify(nets));
+                const safeColor = color ? JSON.parse(JSON.stringify(color)) : null;
+                await eda.pcb_Drc.deleteNetClass(name);
+                console.log('rgb:', safeColor, " hex:", rgbToHex(safeColor));
+                await eda.pcb_Drc.createNetClass(name, safeNets, safeColor);
+            }
+
+            // apply equal length group colors
+            for (const elg of equalLengthPairs.value) {
+                const name = String(elg.name);
+                const nets = Array.isArray(elg.nets) ? elg.nets.map((n: any) => String(n)) : [];
+                const color = elg.color ? { r: elg.color.r, g: elg.color.g, b: elg.color.b, alpha: elg.color.alpha } : null;
+                const safeNets = JSON.parse(JSON.stringify(nets));
+                const safeColor = color ? JSON.parse(JSON.stringify(color)) : null;
+                await eda.pcb_Drc.deleteEqualLengthNetGroup(name);
+                console.log('rgb:', safeColor, " hex:", rgbToHex(safeColor));
+                await eda.pcb_Drc.createEqualLengthNetGroup(name, safeNets, safeColor);
+            }
+
+            await onRefresh();
+        } catch (e) {
+            console.error('Failed to apply classes/groups to EDA:', e);
+        } finally {
+            loading.value = false;
+        }
+    }
 }
 
 function onCancel() {
@@ -230,15 +313,20 @@ watch(
     { flush: 'sync' },
 );
 
-watch(userColors, async (newVal) => {
-    const data = JSON.stringify(newVal);
-    if (isEDA) {
-        await eda.sys_Storage.setExtensionAllUserConfigs({ ...eda.sys_Storage.getExtensionAllUserConfigs(), 'userColors': data });
-    }
-    else {
-        localStorage.setItem('userColors', data);
-    }
-    console.log('User colors updated:', JSON.stringify(newVal));
+const DEBOUNCE_MS = 100;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+watch(userColors, (newVal) => {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(async () => {
+        const data = JSON.stringify(newVal);
+        if (isEDA) {
+            await eda.sys_Storage.setExtensionAllUserConfigs({ ...eda.sys_Storage.getExtensionAllUserConfigs(), userColors: data });
+        } else {
+            localStorage.setItem('userColors', data);
+        }
+        saveTimer = null;
+    }, DEBOUNCE_MS);
 }, { deep: true });
 
 </script>

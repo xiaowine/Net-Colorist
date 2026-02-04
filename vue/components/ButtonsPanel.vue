@@ -1,7 +1,8 @@
 <template>
     <div class="buttons-panel">
-        <button class="primary" @click="onRefresh">刷新</button>
-        <button class="secondary" @click="onRandom">随机分配颜色</button>
+        <button class="primary" @click="onRefresh">🗘刷新</button>
+        <button class="secondary" @click="onHelp">使用说明</button>
+        <button class="primary" @click="onRandom">随机分配颜色</button>
         <button class="secondary" @click="onSync">将差分对同步到等长对</button>
         <button class="primary" @click="onApply">应用到PCB</button>
         <button class="secondary" @click="onCancel">关闭窗口</button>
@@ -10,8 +11,10 @@
 
 <script setup lang="ts">
 
+
 const emit = defineEmits<{
     (e: 'refresh'): void
+    (e: 'onHelp'): void
     (e: 'onRandom'): void
     (e: 'sync'): void
     (e: 'apply'): void
@@ -20,6 +23,9 @@ const emit = defineEmits<{
 
 function onRefresh() {
     emit('refresh');
+}
+function onHelp() {
+    emit('onHelp');
 }
 
 function onRandom() {

@@ -10,7 +10,12 @@ export type UserColorMap = Record<number, ColorRGBA>;
 const pad = (s: string) => (s.length === 1 ? '0' + s : s);
 
 function clamp(v: number) {
-	return Math.max(0, Math.min(255, Math.round(v)));
+	// Support both normalized (0..1) and 0..255 component ranges.
+	// If value looks like a normalized component (<= 1.01), scale it up.
+	if (typeof v !== 'number' || !isFinite(v)) return 0;
+	let val = v;
+	if (val <= 1.01) val = val * 255;
+	return Math.max(0, Math.min(255, Math.round(val)));
 }
 
 export function rgbToHex(rgb: { r: number; g: number; b: number }): string {

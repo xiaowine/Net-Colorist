@@ -44,5 +44,4 @@ export async function set(): Promise<void> {
 // const alldfp = await eda.pcb_Drc.getAllDifferentialPairs();
 // alldfp.forEach((dfp) => {
 // 	console.log('Differential Pair Name:', dfp.name);
-// 	eda.pcb_Drc.createEqualLengthNetGroup(`${dfp.name}_DIFP`, [dfp.positiveNet, dfp.negativeNet], { r: 250, g: 250, b: 250, alpha: 1.0 });
-// });
+// eda.pcb_Drc.createEqualLengthNetGroup(`${dfp.name}_DIFP`, [dfp.positiveNet, dfp.negativeNet], { r: 255, g: 255, b: 255, alpha: 1.0 });
